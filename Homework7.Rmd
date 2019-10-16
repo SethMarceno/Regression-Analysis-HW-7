@@ -1,0 +1,181 @@
+---
+title: "Homework 7"
+author: "Seth Marceno"
+date: "6/6/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+load('HW7.RData')
+library(car)
+```
+
+#Question 1
+
+Here I read in the data and do forwards AIC selection:
+```{r, warning = FALSE}
+data(mantel)
+X1 <- mantel$X1
+X2 <- mantel$X2
+X3 <- mantel$X3
+Y <- mantel$Y
+fullModel <- ~ X1 + X2 + X3
+baseModel <- lm(Y ~ X1)
+forward <- step(baseModel, fullModel, direction = 'forward')
+```
+
+Here we do backwards AIC selection:
+```{r, warning=FALSE}
+m1 <- update(baseModel, fullModel)
+backwards <- step(m1, scope = c(lower = ~ X1) , direction = 'backward')
+```
+
+Here I do forwards BIC selection:
+```{r, warning = FALSE}
+forwardBIC <- step(baseModel, fullModel, direction = 'forward', k = log(length(X1)))
+```
+
+Here I do backwards BIC selection:
+```{r, warning=FALSE}
+backwardBIC <- step(m1, scope = c(lower = ~ X1), direction = 'backward', k = log(length(X1)))
+```
+Based off of both forwards and backwards selection using BIC and AIC, we see that the active regressors are X1 and X2.
+
+#Question 2
+
+##Case 1:
+```{r}
+e <- 1
+hii <- .9
+p <- 4
+n <- 54
+sigma <- 4
+  
+  
+ri_1 <- e/ (sigma*(sqrt(1-hii)))
+ri_1
+Di_1 <- (1/p)*(ri_1^2)*(hii/(1-hii))
+Di_1
+ti_1 <- ri_1*(((n-p-1)/(n-p-(ri_1^2)))^0.5)
+ti_1
+qt(p = 0.975, df = 49, lower.tail = TRUE)
+```
+At level alpha = 0.05, our critical value is 2.01. Since ti_1 is not greater than our critical value, we determine that this point is not influential. 
+
+##Case 2:
+
+```{r}
+e <- 1.732
+hii <- 0.75
+p <- 4
+n <- 54
+sigma <- 4
+  
+  
+ri_2 <- e/ (sigma*(sqrt(1-hii)))
+ri_2
+Di_2 <- (1/p)*(ri_2^2)*(hii/(1-hii))
+Di_2
+ti_2 <- ri_2*(((n-p-1)/(n-p-(ri_2^2)))^0.5)
+ti_2
+```
+Comparing our test statistic to the critical value we found above, again we see our test statistic is smaller, so we conlcude that this point is not influential.
+
+##Case 3:
+
+```{r}
+e <- 9
+hii <- 0.25
+p <- 4
+n <- 54
+sigma <- 4
+  
+  
+ri_3 <- e/ (sigma*(sqrt(1-hii)))
+ri_3
+Di_3 <- (1/p)*(ri_3^2)*(hii/(1-hii))
+Di_3
+ti_3 <- ri_3*(((n-p-1)/(n-p-(ri_3^2)))^0.5)
+ti_3
+```
+Since our test statistic is greater than our critical value (2.01) we determine that this point is influential. 
+
+##Case 4
+
+```{r}
+e <- 10.295
+hii <- 0.185
+p <- 4
+n <- 54
+sigma <- 4
+  
+  
+ri_4 <- e/ (sigma*(sqrt(1-hii)))
+ri_4
+Di_4 <- (1/p)*(ri_4^2)*(hii/(1-hii))
+Di_4
+ti_4 <- ri_4*(((n-p-1)/(n-p-(ri_4^2)))^0.5)
+ti_4
+```
+Since our test statistic is greater than our critical value (2.01) we determine that this point is influential. 
+
+
+#Question 3
+
+##Part(a)
+
+```{r, warning=FALSE}
+data(lathe1)
+Speed <- lathe1$Speed
+Feed <- lathe1$Feed
+Life <- lathe1$Life
+fit1 <- lm(Life ~ Speed + Feed + I(Speed^2) + I(Feed^2) + Speed*Feed)
+boxCox(fit1)
+```
+Since 0 is within the interval, we know to log transform our response. 
+
+##Part(b)
+
+```{r}
+fit2 <- lm(log(Life) ~ Speed + Feed + I(Speed^2) + I(Feed^2) + Speed*Feed)
+influenceIndexPlot(fit2)
+```
+
+Here we see points 9 and 10 have the highest cooks distance, therefore we will remove them.
+
+```{r}
+new.lathe1 <- lathe1[-c(9, 10), ]
+new.Speed <- new.lathe1$Speed
+new.Feed <- new.lathe1$Feed
+new.Life <- new.lathe1$Life
+fit3 <- lm(log(new.Life) ~ new.Speed + new.Feed + I(new.Speed^2) + I(new.Feed^2) + new.Speed*new.Feed)
+summary(fit2)
+summary(fit3)
+```
+Based off of our summary function we see that before removing the influencial points, our R squared value is 0.9702, and after we get an R squared of 0.9759. Therefore we can see the non-influential data has a slightly better fit than with the influential points. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r, include = FALSE}
+save.image('HW7.RData')
+```
+
